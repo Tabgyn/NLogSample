@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<nlog xmlns="http://www.nlog-project.org/schemas/NLog.xsd"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      throwConfigExceptions="true">
+  <extensions>
+    <add assembly="NLog.Web" />
+    <add assembly="NLog.Layouts.GelfLayout" />
+  </extensions>
+
+  <targets>
+    <target name="Network" xsi:type="AsyncWrapper">
+      <target name="Graylog" xsi:type="Network" address="tcp://nlb-graylog-meifacilcom-8af3b2b16b45d371.elb.us-east-1.amazonaws.com:12201/gelf">
+        <layout type="GelfLayout" facility="NLogSample">
+          <field name="LogDate" layout="${longdate}"/>
+          <field name="Level" layout="${level:uppercase=true}"/>
+          <field name="Exception" layout="${exception:format=ToString,Method,StackTrace,Data:innerFormat=ToString,Method,StackTrace,Data:maxInnerExceptionLevel=3:baseException=true}"/>
+          <field name="RequestUrl" layout="${aspnet-request:serverVariable=HTTP_URL}${aspnet-request:queryString}"/>
+          <field name="RequestBody" layout="${aspnet-request-posted-body}"/>
+          <field name="Cluster" layout="DEV"/>
+          <field name="Namespace" layout="NLogSample"/>
+        </layout>
+      </target>
+    </target>
+  </targets>
+
+  <rules>
+    <logger name="*" minlevel="Error" writeTo="Network"/>
+  </rules>
+</nlog>
